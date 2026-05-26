@@ -4,6 +4,8 @@ import queue
 import threading
 import time
 import uuid
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, request, jsonify, Response, send_file, render_template, stream_with_context
 from downloader.engine import extract_info, build_format_list, download_video
 from downloader.utils import validate_url, sanitize_filename, cleanup_old_files
