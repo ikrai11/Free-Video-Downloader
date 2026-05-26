@@ -10,14 +10,36 @@ _DEEPSEEK_BASE = 'https://api.deepseek.com/v1'
 _MAX_SUBTITLE_CHARS = 12000  # ~15K tokens, leaves room for prompt & response
 
 
+def _load_dotenv():
+    """Load key=value pairs from .env file (if exists) into os.environ."""
+    paths = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'),
+        '.env',
+    ]
+    for path in paths:
+        if not os.path.isfile(path):
+            continue
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, _, val = line.partition('=')
+                key, val = key.strip(), val.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+
+
+_load_dotenv()
+
+
 def _get_api_key() -> str:
     key = os.environ.get('DEEPSEEK_API_KEY', '')
     if not key:
         raise RuntimeError(
-            '请设置环境变量 DEEPSEEK_API_KEY。\n'
+            '请设置 DEEPSEEK_API_KEY 环境变量或在项目根目录创建 .env 文件。\n'
             '获取方式：访问 https://platform.deepseek.com 注册并创建 API Key。\n'
-            '设置方法：在终端执行 set DEEPSEEK_API_KEY=你的key (Windows) '
-            '或 export DEEPSEEK_API_KEY=你的key (Mac/Linux)'
+            '配置方法：在项目根目录的 .env 文件中添加 DEEPSEEK_API_KEY=你的key'
         )
     return key
 
