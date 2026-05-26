@@ -189,11 +189,19 @@ def _format_eta(seconds: float) -> str:
 
 # ── Public API (same signatures as before) ─────────────────────────────
 
+def _normalize_url(url: str) -> str:
+    """Normalize mobile URLs to standard www domains that yt-dlp recognizes."""
+    # m.bilibili.com → www.bilibili.com
+    url = re.sub(r'^https?://m\.bilibili\.com/', 'https://www.bilibili.com/', url)
+    return url
+
+
 def extract_info(url: str) -> dict:
     """Extract video metadata. Routes Douyin to custom parser, others to yt-dlp."""
     if _is_douyin(url):
         return _douyin_extract_info(url)
 
+    url = _normalize_url(url)
     ydl_opts = {
         'quiet': True, 'no_warnings': True, 'skip_download': True,
         'check_formats': False, 'playlistend': 1, 'noplaylist': True,
@@ -260,6 +268,8 @@ def download_video(url: str, format_id: str, output_dir: str, progress_queue: qu
         info = _douyin_extract_info(url)
         _douyin_download(info, output_dir, progress_queue)
         return
+
+    url = _normalize_url(url)
 
     def hook(d):
         progress_queue.put(d)
