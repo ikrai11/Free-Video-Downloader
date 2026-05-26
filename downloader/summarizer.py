@@ -46,6 +46,13 @@ def _get_api_key() -> str:
 
 def extract_subtitles(url: str) -> str:
     """Extract subtitle text from a video URL using yt-dlp. Returns plain text."""
+    # Douyin does not provide subtitle access via yt-dlp
+    if 'douyin.com' in url:
+        raise RuntimeError(
+            '抖音视频暂不支持 AI 总结。\n'
+            '抖音平台目前没有提供公开的字幕接口，无法提取视频文字内容进行总结。'
+        )
+
     import yt_dlp
 
     tmpdir = tempfile.mkdtemp(prefix='vault_subs_')
