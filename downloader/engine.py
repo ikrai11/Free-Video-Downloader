@@ -206,7 +206,6 @@ def extract_info(url: str) -> dict:
         'quiet': True, 'no_warnings': True, 'skip_download': True,
         'check_formats': False, 'playlistend': 1, 'noplaylist': True,
         'socket_timeout': 15,
-        'http_headers': {'User-Agent': _MOBILE_UA, 'Referer': _DOUYIN_HOME},
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -288,7 +287,6 @@ def download_video(url: str, format_id: str, output_dir: str, progress_queue: qu
                 'outtmpl': f'{output_dir}/%(title).120s [%(id)s].%(ext)s',
                 'progress_hooks': [hook], 'merge_output_format': 'mp4',
                 'playlistend': 1, 'noplaylist': True,
-                'http_headers': {'User-Agent': _MOBILE_UA, 'Referer': _DOUYIN_HOME},
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
