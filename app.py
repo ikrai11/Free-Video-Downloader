@@ -290,6 +290,7 @@ def api_summarize():
     task = {'progress_queue': q, 'status': 'running'}
 
     def _run():
+        q.put({'status': 'progress', 'message': '正在提取视频字幕...'})
         try:
             sub_text, title = extract_subtitles(url)
             summarize_stream(sub_text, title, q)
@@ -302,7 +303,7 @@ def api_summarize():
     def generate():
         while True:
             try:
-                data = q.get(timeout=60)
+                data = q.get(timeout=120)
                 status = data.get('status', 'progress')
                 if status == 'chunk':
                     event = 'chunk'
@@ -346,6 +347,7 @@ def api_summarize_stream():
     q = queue.Queue()
 
     def _run():
+        q.put({'status': 'progress', 'message': '正在提取视频字幕...'})
         try:
             sub_text, title = extract_subtitles(url)
             summarize_stream(sub_text, title, q)
@@ -358,7 +360,7 @@ def api_summarize_stream():
     def generate():
         while True:
             try:
-                msg = q.get(timeout=60)
+                msg = q.get(timeout=120)
                 status = msg.get('status', 'progress')
                 if status == 'chunk':
                     event = 'chunk'

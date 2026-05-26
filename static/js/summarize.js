@@ -15,7 +15,7 @@
     if (!urlInput) return;
     const url = urlInput.value.trim();
     if (!url) {
-      window._showToast && window._showToast('请先粘贴视频链接。', 'error');
+      if (typeof showError === 'function') showError('请先粘贴视频链接。');
       return;
     }
 
@@ -65,13 +65,13 @@
     });
 
     summaryEventSource.addEventListener('error', function (e) {
-      let msg = '总结失败。';
+      let msg = '总结失败，请检查视频是否有字幕。';
       try {
         const d = JSON.parse(e.data);
         msg = d.message || msg;
       } catch (_) {}
       if (summaryContent) {
-        summaryContent.innerHTML = '<p class="summary-error">' + msg + '</p>';
+        summaryContent.innerHTML = '<p class="summary-error">' + msg.replace(/\n/g, '<br>') + '</p>';
       }
       if (btn) btn.disabled = false;
       if (btnText) btnText.textContent = 'AI 总结';
@@ -79,6 +79,17 @@
     });
 
     summaryEventSource.onerror = function () {
+      // Connection-level error (not a server-sent error event)
+      if (summaryEventSource && summaryEventSource.readyState === EventSource.CLOSED) {
+        var sc = document.querySelector('#summaryContent');
+        if (sc && sc.querySelector('.summary-loading')) {
+          sc.innerHTML = '<p class="summary-error">连接中断，总结失败。</p>';
+        }
+        var b = document.querySelector('#btnSummarize');
+        var bt = document.querySelector('#btnSummarizeText');
+        if (b) b.disabled = false;
+        if (bt) bt.textContent = 'AI 总结';
+      }
       closeSummaryStream();
     };
   };
