@@ -331,6 +331,62 @@ def api_summarize():
     )
 
 
+@app.route('/api/summarize/stream')
+def api_summarize_stream():
+    """GET SSE stream for AI summary — EventSource-compatible."""
+    url = request.args.get('url', '').strip()
+    if not url:
+        return jsonify({'success': False, 'error': '请提供视频链接参数 ?url=...'}), 400
+    ok, err = validate_url(url)
+    if not ok:
+        return jsonify({'success': False, 'error': err}), 400
+
+    from downloader.summarizer import extract_subtitles, summarize_stream
+    import threading
+    q = queue.Queue()
+
+    def _run():
+        try:
+            sub_text, title = extract_subtitles(url)
+            summarize_stream(sub_text, title, q)
+        except Exception as e:
+            q.put({'status': 'error', 'message': str(e)})
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    def generate():
+        while True:
+            try:
+                msg = q.get(timeout=60)
+                status = msg.get('status', 'progress')
+                if status == 'chunk':
+                    event = 'chunk'
+                elif status == 'complete':
+                    event = 'complete'
+                elif status == 'error':
+                    event = 'error'
+                else:
+                    event = 'progress'
+                yield f"event: {event}\ndata: {json.dumps(msg, ensure_ascii=False)}\n\n"
+
+                if status in ('complete', 'error'):
+                    break
+            except queue.Empty:
+                yield "event: heartbeat\ndata: {}\n\n"
+                break
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        },
+    )
+
+
 @app.route('/api/health')
 def api_health():
     import yt_dlp
