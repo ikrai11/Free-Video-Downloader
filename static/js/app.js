@@ -298,6 +298,112 @@ function closeEventSource() {
   }
 }
 
+// --- AI Summary ---
+let summarySource = null;
+
+function requestSummary() {
+  const url = $('#urlInput').value.trim();
+  if (!url) {
+    showError('请先粘贴视频链接。');
+    return;
+  }
+
+  closeSummarySource();
+  const btn = $('#btnSummarize');
+  btn.disabled = true;
+  $('#btnSummarizeText').textContent = '提取字幕中...';
+  $('#summaryArea').style.display = '';
+  $('#summaryContent').innerHTML = '<p class="summary-loading">正在提取视频字幕...</p>';
+
+  fetch('/api/summarize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(d => { throw new Error(d.error || '请求失败'); });
+    // Read SSE stream
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+
+    function read() {
+      reader.read().then(({ done, value }) => {
+        if (done) return;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7);
+          } else if (line.startsWith('data: ')) {
+            try {
+              const d = JSON.parse(line.slice(6));
+              if (currentEvent === 'progress') {
+                $('#summaryContent').innerHTML = '<p class="summary-loading">' + (d.message || '处理中...') + '</p>';
+              } else if (currentEvent === 'chunk') {
+                if (fullText === '') {
+                  $('#btnSummarizeText').textContent = 'AI 总结';
+                  btn.disabled = false;
+                }
+                fullText += d.text;
+                $('#summaryContent').innerHTML = renderMarkdown(fullText);
+                $('#summaryArea').scrollTop = $('#summaryArea').scrollHeight;
+              } else if (currentEvent === 'complete') {
+                $('#summaryArea').querySelector('.summary-area__label').textContent = 'AI 总结完成';
+                btn.disabled = false;
+                $('#btnSummarizeText').textContent = 'AI 总结';
+              } else if (currentEvent === 'error') {
+                $('#summaryContent').innerHTML = '<p class="summary-error">' + (d.message || '总结失败') + '</p>';
+                btn.disabled = false;
+                $('#btnSummarizeText').textContent = 'AI 总结';
+              }
+            } catch (_) {}
+          }
+        }
+        read();
+      });
+    }
+    let currentEvent = '';
+    read();
+  })
+  .catch(err => {
+    $('#summaryContent').innerHTML = '<p class="summary-error">' + (err.message || '网络错误') + '</p>';
+    btn.disabled = false;
+    $('#btnSummarizeText').textContent = 'AI 总结';
+  });
+}
+
+function closeSummarySource() {
+  // Cleanup handled by reader stream
+}
+
+function renderMarkdown(text) {
+  // Simple markdown renderer
+  let html = text
+    // Headers
+    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Unordered lists
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    // Ordered lists
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+    // Paragraphs (double newlines)
+    .replace(/\n\n/g, '</p><p>')
+    // Remaining single newlines → <br>
+    .replace(/\n/g, '<br>');
+
+  return '<p>' + html + '</p>';
+}
+
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && document.activeElement === $('#urlInput')) {

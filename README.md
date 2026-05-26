@@ -16,7 +16,12 @@
 
 ```bash
 # 安装依赖
-pip install flask yt-dlp
+pip install flask yt-dlp openai
+
+# 设置 DeepSeek API Key（用于 AI 视频总结）
+# 获取地址：https://platform.deepseek.com
+set DEEPSEEK_API_KEY=你的key        # Windows
+export DEEPSEEK_API_KEY=你的key     # Mac/Linux
 
 # 启动服务
 python app.py
@@ -31,6 +36,7 @@ python app.py
 ├── app.py                  # Flask 主入口（路由、SSE、任务管理、限流）
 ├── downloader/
 │   ├── engine.py           # 下载引擎（yt-dlp 封装 + 抖音专用解析器）
+│   ├── summarizer.py       # AI 总结（字幕提取 + DeepSeek 流式生成）
 │   └── utils.py            # URL 校验、文件名清理、过期清理
 ├── templates/
 │   └── index.html          # 单页前端（中文界面）
@@ -50,15 +56,39 @@ python app.py
 | `/api/progress/<id>` | GET | SSE 实时进度流 |
 | `/api/file/<id>/<name>` | GET | 下载完成的文件（即用即删） |
 | `/api/thumbnail` | GET | 封面图代理（绕过浏览器加载限制） |
+| `/api/summarize` | POST | AI 视频总结（SSE 流式输出） |
 
 ## 功能特性
 
 - **多平台支持**：YouTube、Bilibili、抖音、TikTok、Twitter 等
 - **画质选择**：自动列出所有可用分辨率，支持单独下载音频
-- **实时进度**：下载过程中显示百分比、速度、剩余时间
+- **AI 视频总结**：一键提取字幕 → DeepSeek 生成大纲、知识点、摘要
+- **实时进度**：下载/总结过程中实时显示进度和状态
+- **流式输出**：AI 总结逐字渲染，体验流畅
 - **无需数据库**：内存管理任务状态，文件即用即删
 - **安全防护**：URL 校验、路径遍历防护、简易限流
 - **暗色主题**：玻璃拟态卡片 + 渐变设计，中文界面
+
+## AI 视频总结
+
+### 工作流程
+```
+粘贴链接 → 提取字幕(yt-dlp) → DeepSeek API → SSE流式输出
+```
+
+### 输出内容
+- **视频大纲**：章节结构树形列表
+- **核心知识点**：3-5 个要点，每个 2-3 句话解释
+- **一句话总结**：概括整个视频
+
+### 使用前提
+1. 注册 DeepSeek 账号：https://platform.deepseek.com
+2. 获取 API Key（新用户有免费额度）
+3. 设置环境变量 `DEEPSEEK_API_KEY`
+4. 视频需要有字幕（B站/YouTube 自动字幕即可）
+
+### 成本
+DeepSeek V3 价格仅 ¥1/百万 token，一次视频总结约 **¥0.01-0.02**。
 
 ## 抖音特殊处理
 

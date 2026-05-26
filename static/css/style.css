@@ -307,6 +307,30 @@ body {
   transform: none;
 }
 
+.btn--summarize {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--primary-bright));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 16px rgba(108, 92, 231, 0.25);
+  margin-top: 10px;
+}
+.btn--summarize:hover {
+  box-shadow: 0 4px 28px rgba(108, 92, 231, 0.40);
+  transform: translateY(-2px);
+}
+.btn--summarize:active {
+  transform: translateY(0);
+}
+.btn--summarize:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Spinner */
 .btn__spinner {
   width: 16px;
@@ -693,6 +717,74 @@ body {
   .input-area__field { min-width: 100%; order: -1; }
   .progress-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .nav__tagline { display: none; }
+}
+
+/* --- Summary Area --- */
+.summary-area {
+  margin-top: 18px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-card);
+  animation: fadeIn 0.35s ease;
+}
+.summary-area__header {
+  margin-bottom: 14px;
+}
+.summary-area__label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent-cyan);
+}
+.summary-content {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--text-dim);
+}
+.summary-content h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-card);
+}
+.summary-content h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 18px 0 8px;
+}
+.summary-content h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-bright);
+  margin: 14px 0 6px;
+}
+.summary-content ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.summary-content li {
+  margin: 4px 0;
+}
+.summary-content strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.summary-content p {
+  margin: 6px 0;
+}
+.summary-loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.summary-error {
+  color: #fca5a5;
 }
 
 /* --- Reduced Motion --- */
